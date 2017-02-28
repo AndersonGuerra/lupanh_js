@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="css/leaflet-routing-machine.css">
+  <link rel="stylesheet" type="text/css" href="css/leaflet.css">
+  <link rel="stylesheet" type="text/css" href="css/font-awesome.css">
+  <link rel="stylesheet" type="text/css" href="css/leaflet.awesome-markers.css">
+  <link rel="stylesheet" type="text/css" href="css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="css/skeleton.css">
+
+  <meta charset="utf-8" />
+  <title>LupaNH - JS Version</title>
+</head>
+<body>
+<div class="row">
+  <div id="mapa" class=""></div>
+</div><br>
+<div class="container">
+  <button onclick="clicou();">Me localizar</button>
+  <button onclick="zeraPontos();">Zera rota</button>
+</div>
+<script src='js/leaflet.js' ></script>
+<script src="js/leaflet-routing-machine.js"></script>
+<script src="js/leaflet.awesome-markers.js"></script>
+
+<script type="text/javascript">
+      // cria o tile layer do osm (open e gratuito)
+      var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      var osmAttrib='Mapa de <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
+      var osm = new L.TileLayer(osmUrl, {minZoom: 8, maxZoom: 30, attribution: osmAttrib});   
+      var meuMapa = L.map('mapa').setView([0.0248143, -51.0731809], 15);
+      // aplica o tile layer ao mapa
+      meuMapa.addLayer(osm);
+
+      // define um icone do tipo map marker
+      var icone = L.AwesomeMarkers.icon({
+        icon: 'fa-map-marker',
+        markerColor: 'blue'
+      });
+      // sobrescreve o icone padrao dos Markers (o padrao nao aparecia nos testes, necessário mais verificações)
+      L.Marker.mergeOptions({
+        icon: icone
+      });
+
+      //var marcador = L.marker([0.0248143, -51.0731809]).addTo(meuMapa);
+
+      // inicializa variaveis que serão utilizadas para marcar as rotas
+      var ponto1 = null;
+      var ponto2 = null;
+      var rota = null;
+
+      //popup quando o user clicar em algum lugar
+      //pode ser reutilizado para outras coisas
+      //var popup = L.popup();
+      //function onMapClick(e) {
+      //  popup.setLatLng(e.latlng).setContent('Voce clicou aqui '+ e.latlng).openOn(meuMapa);
+      //  return e;
+      //}
+
+      // funcao chamada quando o usuario clica em "me localizar"
+      function clicou(){
+        meuMapa.locate();
+      }
+
+      function zeraPontos(){
+        ponto1 = null;
+        ponto2 = null;
+        meuMapa.removeControl(rota);
+      }
+
+      function inicializaRota(){
+        rota = L.Routing.control({
+          waypoints: [
+            //L.latLng(57.74, 11.94),
+            //L.latLng(57.6792, 11.949)
+            L.latLng(ponto1.lat, ponto1.lng),
+            L.latLng(ponto2.lat, ponto2.lng)
+          ]
+        }).addTo(meuMapa);
+        rota.hide();
+      }
+
+      // ao achar uma localização esta função é chamada (a localização é achada na função clicou, linha 60)
+      function onLocationFound (e) {
+        //var pop = L.popup();
+        //L.marker(e.latlng).addTo(meuMapa).bindPopup('Opa').openPopup();
+        meuMapa.setView(e.latlng, 15);
+        L.marker(e.latlng).addTo(meuMapa);
+      }
+
+      // função que ocorre quando uma parte do mapa é tocada
+      function marcarPonto(e){
+        // inicializa a variavel msg, que será mostrada no mapa através de popup
+        var msg = 'Todos os pontos foram marcados';
+        // caso o ponto 1 ainda nao esteja marcado, passa a marcá-lo
+        if(ponto1 == null){
+          ponto1 = e.latlng;
+          msg = 'Ponto 1';
+        }else if(ponto2 == null){ // caso o ponto 2 ainda nao esteja marcado, passa a marcá-lo
+          ponto2 = e.latlng;
+          msg = 'Ponto 2';
+          // inicializa a veriavel rota, que será a rota entre o ponto 1 e ponto 2
+          inicializaRota();
+        }
+        // mostra o popup com a msg criada
+        L.popup().setLatLng(e.latlng).setContent(msg).openOn(meuMapa);
+      }
+
+
+      // associa o evento locationfound com a função criada onLocationFound
+      meuMapa.on('locationfound', onLocationFound);
+      // associa o evento click com a função criada marcarPonto
+      meuMapa.on('click', marcarPonto);
+
+  	</script>
+</body>
+</html>
